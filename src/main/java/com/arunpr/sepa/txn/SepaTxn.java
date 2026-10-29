@@ -132,4 +132,30 @@ public class SepaTxn {
         this.beneficiaryHash = beneficiaryHash;
         this.amount = amount;
     }
+
+    public StageStatus statusOf(Stage stage) {
+        return switch (stage) {
+            case WALLET_DEBIT -> walletDebitStatus;
+            case WALLET_CREDIT -> walletCreditStatus;
+            case BANK_DEBIT -> bankDebitStatus;
+            case BANK_CREDIT -> bankCreditStatus;
+            case POSTPAY_DEBIT -> postpayDebitStatus;
+            case POSTPAY_CREDIT -> postpayCreditStatus;
+            case AUDIT -> auditStatus;
+            case RECALL -> recallStatus;
+        };
+    }
+
+    public void applyStatus(Stage stage, StageStatus status) {
+        switch (stage) {
+            case WALLET_DEBIT -> walletDebitStatus = status;
+            case WALLET_CREDIT -> walletCreditStatus = status;
+            case BANK_DEBIT -> bankDebitStatus = status;
+            case BANK_CREDIT -> bankCreditStatus = status;
+            case POSTPAY_DEBIT -> postpayDebitStatus = status;
+            case POSTPAY_CREDIT -> postpayCreditStatus = status;
+            case AUDIT -> auditStatus = status;
+            case RECALL -> recallStatus = status;
+        }
+    }
 }

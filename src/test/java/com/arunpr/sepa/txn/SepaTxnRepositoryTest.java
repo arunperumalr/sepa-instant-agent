@@ -6,9 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,5 +97,37 @@ class SepaTxnRepositoryTest {
         assertThat(found.getDirection()).isEqualTo(Direction.WITHDRAWAL);
         assertThat(found.getBankCreditStatus()).isEqualTo(StageStatus.FAILED);
         assertThat(found.getRejectCode()).isEqualTo("AC01");
+    }
+
+    @Test
+    void findsWithdrawalsStuckPastCutoff() {
+        Page<SepaTxn> page = repository.findStuckWithdrawals(
+                Scheme.INSTANT,
+                LocalDateTime.now().minusMinutes(30),
+                List.of(StageStatus.PEND, StageStatus.UNKNOWN),
+                PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).extracting(SepaTxn::getTxnRef)
+                .contains("SYN-0004", "SYN-0008")
+                .doesNotContain("SYN-0001", "SYN-0002", "SYN-0005", "SYN-0011");
+    }
+
+    @Test
+    void concurrentChangeIsDetectedByVersion() {
+        String ref = "TST-" + shortId();
+        repository.saveAndFlush(newTxn(ref, UUID.randomUUID().toString()));
+        entityManager.clear();
+
+        SepaTxn mine = repository.findByTxnRef(ref).orElseThrow();   // I loaded version 0
+
+        // simulate another user changing the same row meanwhile
+        entityManager.createNativeQuery("UPDATE sepa_txn SET version = version + 1 WHERE txn_id = ?1")
+                .setParameter(1, mine.getId())
+                .executeUpdate();
+
+        mine.setBankCreditStatus(StageStatus.SUCC);
+
+        assertThatThrownBy(() -> repository.saveAndFlush(mine))
+                .isInstanceOf(ObjectOptimisticLockingFailureException.class);
     }
 }
