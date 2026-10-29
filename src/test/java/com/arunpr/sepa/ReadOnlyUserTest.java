@@ -1,45 +1,61 @@
 package com.arunpr.sepa;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
- * Proves the agent's database user is read-only.
- * Skipped unless the DB_READONLY_PASSWORD environment variable is set.
- * Run the app once first, so Flyway has created the views and grants.
+ * Proves the agent's configured database user is read-only.
+ * Credentials come from agent.datasource.* in application-local.properties.
  */
-class  ReadOnlyUserTest {
+@SpringBootTest
+@ActiveProfiles("local")
+class ReadOnlyUserTest {
 
-    private static final String URL =
-            "jdbc:mysql://localhost:3306/payments?useSSL=false&allowPublicKeyRetrieval=true";
-    private static Connection conn;
+    @Value("${agent.datasource.url}")
+    private String url;
 
-    @BeforeAll
-    static void connect() throws Exception {
-        String pw = System.getenv("DB_READONLY_PASSWORD");
-        assumeTrue(pw != null && !pw.isBlank(), "DB_READONLY_PASSWORD not set - skipping");
-        conn = DriverManager.getConnection(URL, "agent_ro", pw);
+    @Value("${agent.datasource.username}")
+    private String username;
+
+    @Value("${agent.datasource.password:}")
+    private String password;
+
+    private Connection conn;
+
+    @BeforeEach
+    void connect() throws Exception {
+        assumeTrue(!password.isBlank(), "agent.datasource.password not set - skipping");
+        conn = DriverManager.getConnection(url, username, password);
     }
 
-    @AfterAll
-    static void close() throws Exception {
+    @AfterEach
+    void close() throws Exception {
         if (conn != null) conn.close();
     }
 
-    private static void run(String sql) throws SQLException {
+    private void run(String sql) throws SQLException {
         try (Statement st = conn.createStatement()) {
             st.execute(sql);
         }
+    }
+
+    @Test
+    void agentUserIsNotTheWriterUser() {
+        assertThat(username).isEqualTo("agent_ro");
     }
 
     @Test
