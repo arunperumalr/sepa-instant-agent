@@ -30,7 +30,7 @@ class SepaTxnRepositoryTest {
     }
 
     private SepaTxn newTxn(String txnRef, String idempotencyKey) {
-        return new SepaTxn(txnRef, idempotencyKey, Scheme.INSTANT,
+        return new SepaTxn(txnRef, idempotencyKey, Scheme.INSTANT, Direction.WITHDRAWAL,
                 "W-" + shortId(), "BEN-" + shortId(), new BigDecimal("25.50"));
     }
 
@@ -76,5 +76,21 @@ class SepaTxnRepositoryTest {
 
         assertThatThrownBy(() -> repository.saveAndFlush(duplicate))
                 .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void storesRejectCodeForRejectedWithdrawal() {
+        String ref = "TST-" + shortId();
+        SepaTxn txn = newTxn(ref, UUID.randomUUID().toString());
+        txn.setBankCreditStatus(StageStatus.FAILED);
+        txn.setRejectCode("AC01");
+        repository.saveAndFlush(txn);
+        entityManager.clear();
+
+        SepaTxn found = repository.findByTxnRef(ref).orElseThrow();
+
+        assertThat(found.getDirection()).isEqualTo(Direction.WITHDRAWAL);
+        assertThat(found.getBankCreditStatus()).isEqualTo(StageStatus.FAILED);
+        assertThat(found.getRejectCode()).isEqualTo("AC01");
     }
 }

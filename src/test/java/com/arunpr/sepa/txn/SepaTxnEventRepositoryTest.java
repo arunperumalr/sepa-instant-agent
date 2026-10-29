@@ -35,7 +35,8 @@ class SepaTxnEventRepositoryTest {
 
     private SepaTxn saveNewTxn() {
         SepaTxn txn = new SepaTxn("TST-" + shortId(), UUID.randomUUID().toString(),
-                Scheme.INSTANT, "W-" + shortId(), "BEN-" + shortId(), new BigDecimal("25.50"));
+                Scheme.INSTANT, Direction.WITHDRAWAL,
+                "W-" + shortId(), "BEN-" + shortId(), new BigDecimal("25.50"));
         return txnRepository.saveAndFlush(txn);
     }
 

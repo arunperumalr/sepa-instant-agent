@@ -41,6 +41,11 @@ public class SepaTxn {
     @Column(name = "scheme", nullable = false, length = 10, updatable = false)
     private Scheme scheme;
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "direction", nullable = false, length = 12, updatable = false)
+    private Direction direction;
+
     @Column(name = "wallet_id", nullable = false, length = 32)
     private String walletId;
 
@@ -69,6 +74,9 @@ public class SepaTxn {
     @Enumerated(EnumType.STRING) @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "bank_credit_status", length = 10)
     private StageStatus bankCreditStatus;
+
+    @Column(name = "reject_code", length = 10)
+    private String rejectCode;
 
     @Enumerated(EnumType.STRING) @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(name = "postpay_debit_status", length = 10)
@@ -114,11 +122,12 @@ public class SepaTxn {
 
     protected SepaTxn() { }   // required by JPA
 
-    public SepaTxn(String txnRef, String idempotencyKey, Scheme scheme,
+    public SepaTxn(String txnRef, String idempotencyKey, Scheme scheme, Direction direction,
                    String walletId, String beneficiaryHash, BigDecimal amount) {
         this.txnRef = txnRef;
         this.idempotencyKey = idempotencyKey;
         this.scheme = scheme;
+        this.direction = direction;
         this.walletId = walletId;
         this.beneficiaryHash = beneficiaryHash;
         this.amount = amount;
