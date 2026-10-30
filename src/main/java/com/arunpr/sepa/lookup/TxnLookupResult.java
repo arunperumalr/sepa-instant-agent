@@ -1,10 +1,12 @@
 package com.arunpr.sepa.lookup;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record TxnLookupResult(
         TxnStatusView status,
         List<TxnEventView> events,
-        RejectCodeInfo rejectInfo,        // null when there is no reject code, or the code is unknown
-        boolean rejectCodeUnknown) {      // true when the code is not in reject_code_ref
+        RejectCodeInfo rejectInfo,
+        boolean rejectCodeUnknown) {
 }

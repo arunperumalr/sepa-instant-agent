@@ -45,7 +45,8 @@ public class TxnLookupService {
                 SELECT txn_ref, scheme, direction, wallet_masked, amount, currency,
                        wallet_debit_status, wallet_credit_status, bank_debit_status, bank_credit_status,
                        postpay_debit_status, postpay_credit_status, audit_status, last_publish_error,
-                       reject_code, recall_status, recall_reason, created_at, updated_at
+                       reject_code, recall_status, recall_reason, created_at, updated_at, 
+                       TIMESTAMPDIFF(MINUTE, created_at, NOW(3)) AS age_minutes
                 FROM v_txn_status WHERE txn_ref = ?
                 """)
                 .param(txnRef)
@@ -68,7 +69,9 @@ public class TxnLookupService {
                         rs.getString("recall_status"),
                         rs.getString("recall_reason"),
                         rs.getObject("created_at", LocalDateTime.class),
-                        rs.getObject("updated_at", LocalDateTime.class)))
+                        rs.getObject("updated_at", LocalDateTime.class),
+                        rs.getLong("age_minutes"),
+                        formatAge(rs.getLong("age_minutes"))))
                 .optional();
     }
 
@@ -101,5 +104,16 @@ public class TxnLookupService {
                         rs.getString("action_needed"),
                         rs.getString("action_owner")))
                 .optional();
+    }
+
+    private static String formatAge(long minutes) {
+        if (minutes < 60) {
+            return minutes + " minutes";
+        }
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + " hours " + (minutes % 60) + " minutes";
+        }
+        return (hours / 24) + " days " + (hours % 24) + " hours";
     }
 }

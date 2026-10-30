@@ -59,4 +59,12 @@ class TxnLookupServiceTest {
         assertThatThrownBy(() -> service.lookup("x'; DROP TABLE sepa_txn;--"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    void ageIsComputedByTheDatabaseClock() {
+        TxnLookupResult result = service.lookup("SYN-0004").orElseThrow();
+
+        assertThat(result.status().ageMinutes()).isGreaterThanOrEqualTo(95);
+        assertThat(result.status().createdAgo()).isNotBlank();
+    }
 }

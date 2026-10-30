@@ -1,8 +1,11 @@
 package com.arunpr.sepa.lookup;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record TxnStatusView(
         String txnRef,
         String scheme,
@@ -22,5 +25,7 @@ public record TxnStatusView(
         String recallStatus,
         String recallReason,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt,
+        long ageMinutes,
+        String createdAgo) {
 }
