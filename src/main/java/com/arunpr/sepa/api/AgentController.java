@@ -22,11 +22,9 @@ public class AgentController {
     }
 
     @PostMapping("/ask")
-    public ResponseEntity<?> ask(@RequestBody AskRequest request) {
-        String q = request.question();
-        if (q == null || q.isBlank() || q.length() > 500) {
-            return ResponseEntity.badRequest().body("Question must be 1 to 500 characters");
-        }
-        return ResponseEntity.ok(new AskResponse(agent.ask(q)));
+    public ResponseEntity<AskResponse> ask(@RequestBody AskRequest request) {
+        SupportAgentService.AgentReply reply = agent.ask(request.question());
+        AskResponse body = new AskResponse(reply.answer());
+        return reply.blocked() ? ResponseEntity.badRequest().body(body) : ResponseEntity.ok(body);
     }
 }
