@@ -2,6 +2,7 @@ package com.arunpr.sepa.guard;
 
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,5 +53,13 @@ public class PiiRedactor {
             doubleIt = !doubleIt;
         }
         return sum % 10 == 0;
+    }
+
+    public Optional<String> findIban(String text) {
+        if (text == null) {
+            return Optional.empty();
+        }
+        Matcher m = IBAN.matcher(text);
+        return m.find() ? Optional.of(m.group()) : Optional.empty();
     }
 }

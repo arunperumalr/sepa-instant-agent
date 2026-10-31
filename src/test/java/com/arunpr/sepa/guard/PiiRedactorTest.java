@@ -33,4 +33,11 @@ class PiiRedactorTest {
         String text = "Why was SYN-0002 rejected? Wallet WLT-10000002, amount 75.50";
         assertThat(redactor.redact(text)).isEqualTo(text);
     }
+
+    @Test
+    void findsIbanInRawText() {
+        assertThat(redactor.findIban("Customer DE89 3704 0044 0532 0130 00 says SYN-0002 failed"))
+                .contains("DE89 3704 0044 0532 0130 00");
+        assertThat(redactor.findIban("Why was SYN-0002 rejected?")).isEmpty();
+    }
 }

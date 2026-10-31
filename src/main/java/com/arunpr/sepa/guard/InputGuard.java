@@ -20,7 +20,7 @@ public class InputGuard {
     private static final List<String> INJECTION_PHRASES = List.of(
             "ignore previous instructions", "ignore all previous", "ignore your rules",
             "ignore the rules", "disregard your instructions", "reveal your system prompt",
-            "show your system prompt", "forget your instructions");
+            "show your system prompt", "forget your instructions", "ownership_check");
 
     private final PiiRedactor redactor;
     private final boolean enabled;
